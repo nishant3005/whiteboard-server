@@ -14,11 +14,10 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-const rooms = {}; // in-memory for demo
+const rooms = {};
 
 app.get('/health', async (req, res) => {
   try {
-    // A simple DB query
     const result = await prisma.$queryRaw`SELECT 1`;
     res.status(200).json({ status: 'ok', db: 'connected' });
   } catch (err) {
@@ -29,7 +28,6 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// 1. Add debounce map
 const saveTimeouts = {};
 
 io.on('connection', (socket) => {
@@ -55,11 +53,9 @@ io.on('connection', (socket) => {
   socket.on('draw', ({ roomId, ...data }) => {
     socket.to(roomId).emit('draw', data);
 
-    // Update in-memory
     if (!rooms[roomId]) rooms[roomId] = [];
     rooms[roomId].push(data);
 
-    // Debounce DB write per room
     if (saveTimeouts[roomId]) clearTimeout(saveTimeouts[roomId]);
 
     saveTimeouts[roomId] = setTimeout(async () => {
